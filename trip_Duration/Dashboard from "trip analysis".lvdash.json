@@ -1,0 +1,544 @@
+{
+  "datasets": [
+    {
+      "name": "6691bf4a",
+      "displayName": "Untitled dataset",
+      "queryLines": [
+        "USE CATALOG `nyc_trip_workspace`;\n",
+        "USE SCHEMA `default`;\n",
+        "\n",
+        "SELECT \n",
+        "    CAST(tpep_pickup_datetime AS DATE) AS pickup_date,\n",
+        "    COUNT(VendorID) AS total_trips,\n",
+        "    SUM(passenger_count) AS total_passengers_carried,\n",
+        "    ROUND(SUM(trip_distance), 2) AS total_distance_miles,\n",
+        "    ROUND(SUM(fare_amount), 2) AS total_fare_revenue_usd,\n",
+        "    ROUND(SUM(tip_amount), 2) AS total_tips_collected_usd,\n",
+        "    ROUND(SUM(total_amount), 2) AS total_gross_revenue_usd,\n",
+        "    ROUND(AVG(trip_duration_minutes), 2) AS avg_trip_duration_minutes,\n",
+        "    -- Safe division for tip percentage\n",
+        "    ROUND(\n",
+        "        COALESCE(SUM(tip_amount) / NULLIF(SUM(fare_amount), 0) * 100, 0), 2\n",
+        "    ) AS avg_tip_percentage\n",
+        "FROM dev_nyc.silver.taxi_duartion -- Replace with your actual silver table name\n",
+        "GROUP BY CAST(tpep_pickup_datetime AS DATE)\n",
+        "ORDER BY pickup_date DESC;\n"
+      ]
+    },
+    {
+      "name": "e9f00dde",
+      "displayName": "Untitled dataset",
+      "queryLines": [
+        "USE CATALOG `nyc_trip_workspace`;\n",
+        "USE SCHEMA `default`;\n",
+        "\n",
+        "-- Widget: Hourly Traffic Volume Profile\n",
+        "SELECT \n",
+        "    pickup_hour,\n",
+        "    ROUND(AVG(trip_demand_volume), 0) AS average_trips_per_hour\n",
+        "FROM \n",
+        "    dev_nyc.gold.fact_hourly_demand\n",
+        "GROUP BY \n",
+        "    pickup_hour\n",
+        "ORDER BY \n",
+        "    pickup_hour ASC;\n"
+      ]
+    },
+    {
+      "name": "b62c6979",
+      "displayName": "Untitled dataset",
+      "queryLines": [
+        "USE CATALOG `nyc_trip_workspace`;\n",
+        "USE SCHEMA `default`;\n",
+        "\n",
+        "-- Widget: Speed Decay vs Revenue Impact\n",
+        "SELECT \n",
+        "    avg_speed_mph,\n",
+        "    avg_base_fare,\n",
+        "    trip_demand_volume\n",
+        "FROM \n",
+        "    dev_nyc.gold.fact_hourly_demand\n",
+        "WHERE \n",
+        "    avg_speed_mph > 0 AND avg_speed_mph < 60 -- Data Cleaning Bounds\n",
+        "ORDER BY \n",
+        "    trip_demand_volume DESC;\n"
+      ]
+    },
+    {
+      "name": "8cbd654a",
+      "displayName": "Untitled dataset",
+      "queryLines": [
+        "USE CATALOG `nyc_trip_workspace`;\n",
+        "USE SCHEMA `default`;\n",
+        "\n",
+        "SELECT \n",
+        "    CONCAT('Zone ', PULocationID, ' ➡️ Zone ', DOLocationID) AS transit_corridor,\n",
+        "    VendorID,\n",
+        "    SUM(trip_count) AS trip_count,\n",
+        "    ROUND(SUM(total_revenue), 2) AS corridor_revenue_usd,\n",
+        "    ROUND(SUM(total_distance_miles) / NULLIF(SUM(total_duration_minutes) / 60.0, 0), 2) AS corridor_avg_speed_mph\n",
+        "FROM \n",
+        "    dev_nyc.gold.fact_vendor_performance\n",
+        "GROUP BY \n",
+        "    PULocationID, DOLocationID, VendorID\n",
+        "ORDER BY \n",
+        "    corridor_revenue_usd DESC\n",
+        "LIMIT 10;\n"
+      ]
+    },
+    {
+      "name": "53f376a7",
+      "displayName": "Untitled dataset",
+      "queryLines": [
+        "USE CATALOG `nyc_trip_workspace`;\n",
+        "USE SCHEMA `default`;\n",
+        "\n",
+        "SELECT \n",
+        "    pickup_hour,\n",
+        "    VendorID,\n",
+        "    SUM(total_revenue) AS hourly_gross_revenue,\n",
+        "    SUM(trip_count) AS hourly_trip_volume\n",
+        "FROM \n",
+        "    dev_nyc.gold.fact_vendor_performance\n",
+        "GROUP BY \n",
+        "    pickup_hour, VendorID\n",
+        "ORDER BY \n",
+        "    pickup_hour ASC;\n"
+      ]
+    },
+    {
+      "name": "76784dc0",
+      "displayName": "Untitled dataset",
+      "queryLines": [
+        "USE CATALOG `nyc_trip_workspace`;\n",
+        "USE SCHEMA `default`;\n",
+        "\n",
+        "SELECT \n",
+        "    pickup_hour,\n",
+        "    VendorID,\n",
+        "    SUM(total_revenue) AS hourly_gross_revenue,\n",
+        "    SUM(trip_count) AS hourly_trip_volume\n",
+        "FROM \n",
+        "    dev_nyc.gold.fact_vendor_performance\n",
+        "GROUP BY \n",
+        "    pickup_hour, VendorID\n",
+        "ORDER BY \n",
+        "    pickup_hour ASC;\n"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "ea1fd882",
+      "displayName": "trip analysis",
+      "layout": [
+        {
+          "widget": {
+            "name": "5d631706",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6691bf4a",
+                  "fields": [
+                    {
+                      "name": "pickup_date",
+                      "expression": "`pickup_date`"
+                    },
+                    {
+                      "name": "total_trips",
+                      "expression": "`total_trips`"
+                    },
+                    {
+                      "name": "total_passengers_carried",
+                      "expression": "`total_passengers_carried`"
+                    },
+                    {
+                      "name": "total_distance_miles",
+                      "expression": "`total_distance_miles`"
+                    },
+                    {
+                      "name": "total_fare_revenue_usd",
+                      "expression": "`total_fare_revenue_usd`"
+                    },
+                    {
+                      "name": "total_tips_collected_usd",
+                      "expression": "`total_tips_collected_usd`"
+                    },
+                    {
+                      "name": "total_gross_revenue_usd",
+                      "expression": "`total_gross_revenue_usd`"
+                    },
+                    {
+                      "name": "avg_trip_duration_minutes",
+                      "expression": "`avg_trip_duration_minutes`"
+                    },
+                    {
+                      "name": "avg_tip_percentage",
+                      "expression": "`avg_tip_percentage`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Daily trips vs performance",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "rowsPerPage": 25,
+              "displayRowNumbers": false,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "pickup_date",
+                    "useForSearch": false,
+                    "contentAlignment": "right",
+                    "format": {
+                      "type": "moment.js",
+                      "format": "DD/MM/YYYY"
+                    },
+                    "actions": {
+                      "hover": {
+                        "type": "tooltip",
+                        "tooltipTemplate": "{{ @ }}"
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "total_trips",
+                    "useForSearch": false,
+                    "format": {
+                      "type": "numeral.js",
+                      "format": "0"
+                    },
+                    "actions": {
+                      "hover": {
+                        "type": "tooltip",
+                        "tooltipTemplate": "{{ @ }}"
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "total_passengers_carried",
+                    "useForSearch": false,
+                    "format": {
+                      "type": "numeral.js",
+                      "format": "0"
+                    },
+                    "actions": {
+                      "hover": {
+                        "type": "tooltip",
+                        "tooltipTemplate": "{{ @ }}"
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "total_distance_miles",
+                    "useForSearch": false,
+                    "format": {
+                      "type": "numeral.js",
+                      "format": "0.00"
+                    },
+                    "actions": {
+                      "hover": {
+                        "type": "tooltip",
+                        "tooltipTemplate": "{{ @ }}"
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "total_fare_revenue_usd",
+                    "useForSearch": false,
+                    "format": {
+                      "type": "numeral.js",
+                      "format": "0.00"
+                    },
+                    "actions": {
+                      "hover": {
+                        "type": "tooltip",
+                        "tooltipTemplate": "{{ @ }}"
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "total_tips_collected_usd",
+                    "useForSearch": false,
+                    "format": {
+                      "type": "numeral.js",
+                      "format": "0.00"
+                    },
+                    "actions": {
+                      "hover": {
+                        "type": "tooltip",
+                        "tooltipTemplate": "{{ @ }}"
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "total_gross_revenue_usd",
+                    "useForSearch": false,
+                    "format": {
+                      "type": "numeral.js",
+                      "format": "0.00"
+                    },
+                    "actions": {
+                      "hover": {
+                        "type": "tooltip",
+                        "tooltipTemplate": "{{ @ }}"
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "avg_trip_duration_minutes",
+                    "useForSearch": false,
+                    "format": {
+                      "type": "numeral.js",
+                      "format": "0.00"
+                    },
+                    "actions": {
+                      "hover": {
+                        "type": "tooltip",
+                        "tooltipTemplate": "{{ @ }}"
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "avg_tip_percentage",
+                    "useForSearch": false,
+                    "format": {
+                      "type": "numeral.js",
+                      "format": "0.00"
+                    },
+                    "actions": {
+                      "hover": {
+                        "type": "tooltip",
+                        "tooltipTemplate": "{{ @ }}"
+                      }
+                    }
+                  }
+                ]
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "59a0be23",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "e9f00dde",
+                  "fields": [
+                    {
+                      "name": "pickup_hour",
+                      "expression": "`pickup_hour`"
+                    },
+                    {
+                      "name": "avg(average_trips_per_hour)",
+                      "expression": "AVG(`average_trips_per_hour`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Hourly Capacity Demand Profile ",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "mark": {
+                "layout": "stack"
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "pickup_hour",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "avg(average_trips_per_hour)",
+                  "displayName": "average_trips_per_hour",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "pickup_hour",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 0,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "c00700be",
+            "queries": [
+              {
+                "name": "4a7d8b379e994e858b7bbcbea4a8f4c9",
+                "query": {
+                  "datasetName": "b62c6979",
+                  "fields": [
+                    {
+                      "name": "avg_speed_mph",
+                      "expression": "`avg_speed_mph`"
+                    },
+                    {
+                      "name": "trip_demand_volume",
+                      "expression": "`trip_demand_volume`"
+                    },
+                    {
+                      "name": "avg_base_fare",
+                      "expression": "`avg_base_fare`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 0,
+              "viz_spec": {
+                "display_name": "Speed decay vs Revenue impact",
+                "viz_type": "CHART",
+                "serialized_options": "{\"series\":{\"error_y\":{\"type\":\"data\",\"visible\":true},\"stacking\":null},\"coefficient\":1,\"yAxis\":[{\"type\":\"-\"},{\"opposite\":true,\"type\":\"-\"}],\"columnConfigurationMap\":{\"x\":{\"column\":\"avg_speed_mph\",\"id\":\"column_e1652236150\"},\"y\":[{\"column\":\"trip_demand_volume\",\"id\":\"column_e1652236160\"},{\"column\":\"avg_base_fare\",\"id\":\"column_e1652236161\"}]},\"alignYAxesAtZero\":true,\"direction\":{\"type\":\"counterclockwise\"},\"swappedAxes\":false,\"percentFormat\":\"0[.]00%\",\"textFormat\":\"\",\"legend\":{\"traceorder\":\"normal\"},\"globalSeriesType\":\"scatter\",\"version\":2,\"sizemode\":\"diameter\",\"seriesOptions\":{\"avg_base_fare\":{\"type\":\"scatter\",\"yAxis\":0},\"trip_demand_volume\":{\"type\":\"scatter\",\"yAxis\":0}},\"error_y\":{\"type\":\"data\",\"visible\":true},\"sortX\":true,\"showDataLabels\":false,\"missingValuesAsZero\":true,\"useAggregationsUi\":true,\"numberFormat\":\"0,0.[00000]\",\"dateTimeFormat\":\"DD/MM/YYYY HH:mm\",\"sortY\":true,\"valuesOptions\":{},\"xAxis\":{\"labels\":{\"enabled\":true},\"type\":\"-\"}}",
+                "query_name": "4a7d8b379e994e858b7bbcbea4a8f4c9"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 6,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "f384c6b0",
+            "queries": [
+              {
+                "name": "ccb66fd46386409491b9b1549c3215a6",
+                "query": {
+                  "datasetName": "8cbd654a",
+                  "fields": [
+                    {
+                      "name": "transit_corridor",
+                      "expression": "`transit_corridor`"
+                    },
+                    {
+                      "name": "column_e1652236212",
+                      "expression": "SUM(`trip_count`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 0,
+              "viz_spec": {
+                "display_name": "High revenue corridors",
+                "viz_type": "CHART",
+                "serialized_options": "{\"isAggregationOn\":true,\"series\":{\"error_y\":{\"type\":\"data\",\"visible\":true},\"stacking\":null},\"coefficient\":1,\"yAxis\":[{\"type\":\"-\"},{\"opposite\":true,\"type\":\"-\"}],\"columnConfigurationMap\":{\"x\":{\"column\":\"transit_corridor\",\"id\":\"column_e1652236210\"},\"y\":[{\"column\":\"trip_count\",\"id\":\"column_e1652236212\",\"transform\":\"SUM\"}]},\"alignYAxesAtZero\":true,\"direction\":{\"type\":\"counterclockwise\"},\"swappedAxes\":true,\"percentFormat\":\"0[.]00%\",\"textFormat\":\"\",\"legend\":{\"traceorder\":\"normal\"},\"globalSeriesType\":\"column\",\"version\":2,\"sizemode\":\"diameter\",\"seriesOptions\":{\"column_e1652236212\":{\"type\":\"column\",\"yAxis\":0}},\"error_y\":{\"type\":\"data\",\"visible\":true},\"sortX\":true,\"showDataLabels\":false,\"missingValuesAsZero\":true,\"useAggregationsUi\":true,\"numberFormat\":\"0,0.[00000]\",\"dateTimeFormat\":\"DD/MM/YYYY HH:mm\",\"sortY\":true,\"valuesOptions\":{},\"xAxis\":{\"labels\":{\"enabled\":true},\"type\":\"-\"}}",
+                "query_name": "ccb66fd46386409491b9b1549c3215a6"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 6,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "eaf05b25",
+            "queries": [
+              {
+                "name": "72fd81f28fcf4b3aaa1a7bfa4b2322dd",
+                "query": {
+                  "datasetName": "76784dc0",
+                  "fields": [
+                    {
+                      "name": "pickup_hour",
+                      "expression": "`pickup_hour`"
+                    },
+                    {
+                      "name": "column_e1652236229",
+                      "expression": "SUM(`hourly_gross_revenue`)"
+                    },
+                    {
+                      "name": "VendorID",
+                      "expression": "`VendorID`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 0,
+              "viz_spec": {
+                "display_name": "Hourly fleet revenue",
+                "viz_type": "CHART",
+                "serialized_options": "{\"isAggregationOn\":true,\"series\":{\"error_y\":{\"type\":\"data\",\"visible\":true},\"stacking\":\"stack\"},\"coefficient\":1,\"yAxis\":[{\"type\":\"-\"},{\"opposite\":true,\"type\":\"-\"}],\"columnConfigurationMap\":{\"series\":{\"column\":\"VendorID\",\"id\":\"column_e1652236231\"},\"x\":{\"column\":\"pickup_hour\",\"id\":\"column_e1652236227\"},\"y\":[{\"column\":\"hourly_gross_revenue\",\"id\":\"column_e1652236229\",\"transform\":\"SUM\"}]},\"alignYAxesAtZero\":true,\"direction\":{\"type\":\"counterclockwise\"},\"swappedAxes\":false,\"percentFormat\":\"0[.]00%\",\"textFormat\":\"\",\"legend\":{\"traceorder\":\"normal\"},\"globalSeriesType\":\"area\",\"version\":2,\"sizemode\":\"diameter\",\"seriesOptions\":{\"1\":{\"color\":\"#8BCAE7\"},\"2\":{\"color\":\"#BF7080\"},\"column_e1652236229\":{\"type\":\"area\",\"yAxis\":0}},\"error_y\":{\"type\":\"data\",\"visible\":true},\"sortX\":true,\"showDataLabels\":false,\"missingValuesAsZero\":true,\"useAggregationsUi\":true,\"numberFormat\":\"0,0.[00000]\",\"dateTimeFormat\":\"DD/MM/YYYY HH:mm\",\"sortY\":true,\"valuesOptions\":{},\"xAxis\":{\"labels\":{\"enabled\":true},\"type\":\"-\"}}",
+                "query_name": "72fd81f28fcf4b3aaa1a7bfa4b2322dd"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 12,
+            "width": 6,
+            "height": 6
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}
